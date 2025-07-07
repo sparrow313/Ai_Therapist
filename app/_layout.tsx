@@ -25,10 +25,29 @@ export default function RootLayout() {
   }
 
   return (
-    <View onLayout={onLayoutRootView} style={{ flex: 1 }}>
-      <Stack>
+    <View onLayout={onLayoutRootView} style={{ flex: 1, backgroundColor: '#18181b' }}>
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: '#18181b' },
+          headerTintColor: '#ffffff',
+          contentStyle: { backgroundColor: '#18181b' }
+        }}
+      >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="info" options={{ headerShown: true }} />
+        <Stack.Screen 
+          name="post/[id]" 
+          options={{ 
+            headerShown: true, 
+            title: "Post"
+          }} 
+        />
+        <Stack.Screen 
+          name="info" 
+          options={{ 
+            headerShown: true,
+            title: "Information"
+          }} 
+        />
       </Stack>
     </View>
   );

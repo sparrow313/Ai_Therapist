@@ -24,11 +24,8 @@ const CalenderWidget = () => {
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
-
     const month = date.getMonth();
-
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-
     const firstDayOfMonth = new Date(year, month, 1).getDay();
 
     const days = [];
@@ -49,7 +46,6 @@ const CalenderWidget = () => {
         days.push(null);
       }
     }
-    console.log(days);
     return days;
   };
 
@@ -73,17 +69,17 @@ const CalenderWidget = () => {
     today.getFullYear() === currentDate.getFullYear();
 
   return (
-    <View className="p-6 ">
+    <View className="p-6 bg-zinc-900 rounded-2xl shadow-lg shadow-black/50">
       <View className="flex-row justify-between items-center mb-5">
         <View className="flex-row items-center">
-          <View className="mr-2 bg-blue-100 dark:bg-blue-900/30 w-8 h-8 rounded-md items-center justify-center">
-            <ThemedText className="text-blue-600 dark:text-blue-400">
+          <View className="mr-2 bg-blue-900/30 w-8 h-8 rounded-md items-center justify-center">
+            <ThemedText className="text-blue-400">
               📅
             </ThemedText>
           </View>
           <ThemedText
             type="subtitle"
-            className="text-gray-500 dark:text-gray-400"
+            className="text-gray-200"
           >
             Calendar
           </ThemedText>
@@ -92,15 +88,15 @@ const CalenderWidget = () => {
 
       <View className="flex-row justify-between items-center mb-4">
         <TouchableOpacity onPress={() => navigateMonth(-1)}>
-          <ThemedText className="text-lg">←</ThemedText>
+          <ThemedText className="text-lg text-gray-400">←</ThemedText>
         </TouchableOpacity>
 
-        <ThemedText type="title" className="text-xl">
+        <ThemedText type="title" className="text-xl text-white">
           {months[currentDate.getMonth()]} {currentDate.getFullYear()}
         </ThemedText>
 
         <TouchableOpacity onPress={() => navigateMonth(1)}>
-          <ThemedText className="text-lg">→</ThemedText>
+          <ThemedText className="text-lg text-gray-400">→</ThemedText>
         </TouchableOpacity>
       </View>
 
@@ -112,7 +108,7 @@ const CalenderWidget = () => {
             style={styles.dayHeaderCell}
             className="items-center justify-center"
           >
-            <ThemedText className="text-gray-500 dark:text-gray-400 text-xs font-medium">
+            <ThemedText className="text-gray-400 text-xs font-medium">
               {day}
             </ThemedText>
           </View>
@@ -134,18 +130,18 @@ const CalenderWidget = () => {
                 className={`w-8 h-8 items-center justify-center rounded-full
                   ${
                     isCurrentMonth && day === today.getDate()
-                      ? "bg-blue-500"
+                      ? "bg-green-600"
                       : ""
                   }
                   ${
                     day === selectedDate
-                      ? "bg-blue-100 dark:bg-blue-900/30"
+                      ? "bg-green-900/30"
                       : ""
                   }
                 `}
               >
                 <ThemedText
-                  className={`
+                  className={`text-gray-400
                     ${
                       isCurrentMonth && day === today.getDate()
                         ? "text-white"
@@ -153,7 +149,7 @@ const CalenderWidget = () => {
                     }
                     ${
                       day === selectedDate
-                        ? "text-blue-600 dark:text-blue-400"
+                        ? "text-green-400"
                         : ""
                     }
                   `}
