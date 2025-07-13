@@ -1,8 +1,10 @@
+import ProgressModal from "@/components/ProgressModal";
 import { useState } from "react";
 import { ScrollView, View } from "react-native";
 import CommunityInspiration from "../../components/CommunityInspiration";
 import DailyMessage from "../../components/DailyMessage";
 import HomeHeader from "../../components/HomeHeader";
+import MoodLogModal from "../../components/MoodLogModal";
 import MotivationStyleSelector, {
   MotivationStyle,
 } from "../../components/MotivationStyleSelector";
@@ -19,8 +21,16 @@ export default function Index() {
   const [showStyleSelector, setShowStyleSelector] = useState(false);
   const [hasTakenPledge, setHasTakenPledge] = useState(false);
   const [hasAcceptedChallenge, setHasAcceptedChallenge] = useState(false);
+  const [showMoodModal, setShowMoodModal] = useState(false);
+  const [showProgressModal, setShowProgressModal] = useState(false);
 
   const todaysTip = getMotivationMessage(motivationStyle, "daily");
+
+  const handleMoodSave = (mood: { emoji: string; label: string; note: string }) => {
+    // Here you would typically save the mood to your backend/storage
+    console.log("Mood logged:", mood);
+    setShowMoodModal(false);
+  };
 
   const quickActions = [
     {
@@ -28,6 +38,7 @@ export default function Index() {
       title: "Log mood",
       desc: "Track how you feel today",
       color: "bg-purple-900",
+      onPress: () => setShowMoodModal(true),
     },
     {
       icon: "🌱",
@@ -37,9 +48,10 @@ export default function Index() {
     },
     {
       icon: "📊",
-      title: "Progress",
+      title: "Logged Moods",
       desc: "View your journey",
       color: "bg-amber-900",
+      onPress: () => setShowProgressModal(true),
     },
     {
       icon: "🧠",
@@ -65,77 +77,90 @@ export default function Index() {
   ];
 
   return (
-    <ScrollView
-      className="flex-1"
-      style={{ backgroundColor: Colors.background.primary }}
-    >
-      <View className="px-5 pt-10 pb-20">
-        {/* Header Section */}
-        <HomeHeader
-          motivationStyle={motivationStyle}
-          onToggleToughLove={() => {
-            if (motivationStyle === "tough-love") {
-              setMotivationStyle("positive");
-            } else {
-              setMotivationStyle("tough-love");
-            }
-          }}
-          onStyleSelectorPress={() => setShowStyleSelector(!showStyleSelector)}
-        />
+    <>
+      <ScrollView
+        className="flex-1"
+        style={{ backgroundColor: Colors.background.primary }}
+      >
+        <View className="px-5 pt-10 pb-20">
+          {/* Header Section */}
+          <HomeHeader
+            motivationStyle={motivationStyle}
+            onToggleToughLove={() => {
+              if (motivationStyle === "tough-love") {
+                setMotivationStyle("positive");
+              } else {
+                setMotivationStyle("tough-love");
+              }
+            }}
+            onStyleSelectorPress={() => setShowStyleSelector(!showStyleSelector)}
+          />
 
-        {/* Motivation Style Selector */}
-        {showStyleSelector && (
+          {/* Motivation Style Selector */}
+          {showStyleSelector && (
+            <View className="mb-8">
+              <MotivationStyleSelector
+                currentStyle={motivationStyle}
+                onStyleChange={(style) => {
+                  setMotivationStyle(style);
+                  setShowStyleSelector(false);
+                }}
+              />
+            </View>
+          )}
+
+          {/* Savings Card */}
           <View className="mb-8">
-            <MotivationStyleSelector
-              currentStyle={motivationStyle}
-              onStyleChange={(style) => {
-                setMotivationStyle(style);
-                setShowStyleSelector(false);
+            <SavingsCard amount="$120.00" />
+          </View>
+
+          {/* Daily Pledge Card */}
+          <View className="mb-8">
+            <PledgeContainer
+              hasTakenPledge={hasTakenPledge}
+              onPledgeTaken={() => setHasTakenPledge(true)}
+            />
+          </View>
+
+          {/* Today's Message */}
+          <View className="mb-8">
+            <DailyMessage
+              title={todaysTip.title}
+              message={todaysTip.message}
+              action={todaysTip.action}
+              motivationStyle={motivationStyle}
+              onActionPress={() => {
+                setHasAcceptedChallenge(true);
+                // You can add more functionality here like navigation or showing a confirmation
               }}
             />
           </View>
-        )}
 
-        {/* Savings Card */}
-        <View className="mb-8">
-          <SavingsCard amount="$120.00" />
+          {/* Quick Actions */}
+          <View className="mb-8">
+            <QuickActions actions={quickActions} />
+          </View>
+
+          {/* Community Inspiration */}
+          <View className="mb-8">
+            <CommunityInspiration post={communityPost} />
+          </View>
+
+          {/* Support Network */}
+          <SupportNetwork supporters={supporters} />
         </View>
+      </ScrollView>
 
-        {/* Daily Pledge Card */}
-        <View className="mb-8">
-          <PledgeContainer
-            hasTakenPledge={hasTakenPledge}
-            onPledgeTaken={() => setHasTakenPledge(true)}
-          />
-        </View>
+      <MoodLogModal
+        visible={showMoodModal}
+        onClose={() => setShowMoodModal(false)}
+        onSave={handleMoodSave}
+      />
 
-        {/* Today's Message */}
-        <View className="mb-8">
-          <DailyMessage
-            title={todaysTip.title}
-            message={todaysTip.message}
-            action={todaysTip.action}
-            motivationStyle={motivationStyle}
-            onActionPress={() => {
-              setHasAcceptedChallenge(true);
-              // You can add more functionality here like navigation or showing a confirmation
-            }}
-          />
-        </View>
-
-        {/* Quick Actions */}
-        <View className="mb-8">
-          <QuickActions actions={quickActions} />
-        </View>
-
-        {/* Community Inspiration */}
-        <View className="mb-8">
-          <CommunityInspiration post={communityPost} />
-        </View>
-
-        {/* Support Network */}
-        <SupportNetwork supporters={supporters} />
-      </View>
-    </ScrollView>
+      <ProgressModal
+        visible={showProgressModal}
+        onClose={() => setShowProgressModal(false)}
+      />
+    </>
   );
 }
