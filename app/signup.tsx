@@ -1,14 +1,128 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';  
+import { supabase } from '../lib/supabase';
+import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
+
+export interface SupabaseUser {
+  id: string;
+  aud: string;
+  role: string;
+  email: string;
+  email_confirmed_at: string;
+  phone: string;
+  last_sign_in_at: string;
+  app_metadata: {
+    provider: string;
+    providers: string[];
+  };
+  user_metadata: {
+    email: string;
+    email_verified: boolean;
+    phone_verified: boolean;
+    sub: string;
+    full_name: string;
+
+  };
+  identities: {
+    identity_id: string;
+    id: string;
+    user_id: string;
+    identity_data: {
+      email: string;
+      email_verified: boolean;
+      phone_verified: boolean;
+      sub: string;
+    };
+    provider: string;
+    last_sign_in_at: string;
+    created_at: string;
+    updated_at: string;
+    email: string;
+  }[];
+  created_at: string;
+  updated_at: string;
+  is_anonymous: boolean;
+}
+
+export interface SupabaseSession {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  expires_at: number;
+  refresh_token: string;
+  user: SupabaseUser;
+}
+
+export interface SupabaseAuthResponse {
+  user: SupabaseUser;
+  session: SupabaseSession;
+}
+
 
 export default function SignUp() {
+
+  const isDev = __DEV__; // true in development, false in production
+
+  const router = useRouter();
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState('');   
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+
+
+  async function save(key: string, value: string) {
+    await SecureStore.setItemAsync(key, value);
+
+    if (isDev) {
+      console.log(`[SecureStore:SET] ${key} = ${value}`);
+    }
+  }
+
+  async function getSecureItem(key: string) {
+    const value = await SecureStore.getItemAsync(key);
+    console.log("valueSignupUserId", value)
+    if (isDev) {
+      console.log(`[SecureStore:GET] ${key} = ${value}`);
+    }
+  
+    return value;
+  }
+
+  useEffect(() => {
+    getSecureItem("user_id")
+  }, []);
+  
+
+  async function signUpWithPassword() {
+    setLoading(true)
+    const {
+      data,
+      error,
+    } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+      options: {
+        data: { full_name: name } // or "name"
+      }
+    })
+    console.log("data", data)
+    await save("access_token", data.session?.access_token || "");
+    await save("refresh_token", data.session?.refresh_token || "");
+    await save("user_id", data.user?.id || "");
+    await save("user_email", data.user?.email || "");
+    await save("user_name", data.user?.user_metadata.full_name || "");
+    await save("user_avatar", data.user?.user_metadata.avatar_url || "");
+    await save("user_created_at", data.user?.created_at || "");
+    await save("user_updated_at", data.user?.updated_at || "");
+    if (error) Alert.alert(error.message)
+
+    setLoading(false)
+  }
 
   return (
     <ScrollView className="flex-1 bg-zinc-900">
@@ -81,6 +195,8 @@ export default function SignUp() {
                 placeholderTextColor="#6b7280"
                 secureTextEntry={!showPassword}
                 className="text-white ml-3 flex-1"
+                autoCorrect={false}
+                textContentType="newPassword"
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                 <Ionicons 
@@ -92,21 +208,7 @@ export default function SignUp() {
             </View>
           </View>
 
-          {/* Confirm Password */}
-          <View>
-            <Text className="text-white font-semibold mb-2">Confirm Password</Text>
-            <View className="bg-zinc-800 rounded-xl border border-zinc-700 p-4 flex-row items-center">
-              <Ionicons name="shield-checkmark-outline" size={20} color="#a1a1aa" />
-              <TextInput
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                placeholder="Confirm your password"
-                placeholderTextColor="#6b7280"
-                secureTextEntry={!showPassword}
-                className="text-white ml-3 flex-1"
-              />
-            </View>
-          </View>
+       
         </View>
 
         {/* Privacy & Terms */}
@@ -137,12 +239,9 @@ export default function SignUp() {
 
         {/* Sign Up Button */}
         <TouchableOpacity 
-          className={`rounded-2xl py-4 mb-4 ${
-            agreeToTerms && name && email && password && confirmPassword
-              ? 'bg-green-500 shadow-lg shadow-green-500/25' 
-              : 'bg-zinc-700'
-          }`}
-          disabled={!agreeToTerms || !name || !email || !password || !confirmPassword}
+          className={`rounded-2xl py-4 mb-4 bg-green-500`}
+         
+          onPress={signUpWithPassword}
         >
           <Text className="text-white font-bold text-center text-lg">Begin Your Recovery Journey</Text>
         </TouchableOpacity>
@@ -170,7 +269,7 @@ export default function SignUp() {
         {/* Login Link */}
         <View className="flex-row justify-center items-center">
           <Text className="text-zinc-400">Already have an account? </Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/login')}>
             <Text className="text-green-400 font-semibold">Sign In</Text>
           </TouchableOpacity>
         </View>

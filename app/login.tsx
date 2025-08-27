@@ -1,17 +1,62 @@
-"use client"
-
 import { Ionicons } from "@expo/vector-icons"
-import { useState } from "react"
-import { ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native"
+import { useEffect, useState } from "react"
+import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native"
+import GoogleSignInComponent from "../utils/supabaseAuth"
+import { supabase } from "../lib/supabase";
+import {  useRouter } from "expo-router";
+import * as SecureStore from 'expo-secure-store';
+
+
+
 
 export default function Login() {
+  const router = useRouter();
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const [focusedField, setFocusedField] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   const isFormValid = email.length > 0 && password.length > 0
+
+
+  async function saveSecureItem(key: string, value: string) {
+    await SecureStore.setItemAsync(key, value);
+  }
+
+  async function getSecureItem(key: string) {
+    const value = await SecureStore.getItemAsync(key);
+    console.log("value", value)
+    return value;
+  }
+
+
+  useEffect(() => {
+    getSecureItem("user_email")
+  }, [])
+
+  async function signInWithEmail() {
+    setLoading(true)
+    const { error, data } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
+    })
+    console.log("session", data)
+
+    await saveSecureItem("user_id", data.user?.id || "")
+    await saveSecureItem("user_email", data.user?.email || "")
+    await saveSecureItem("user_name", data.user?.user_metadata.full_name || "")
+    await saveSecureItem("user_avatar", data.user?.user_metadata.avatar_url || "")
+    await saveSecureItem("user_created_at", data.user?.created_at || "")
+    await saveSecureItem("user_updated_at", data.user?.updated_at || "")
+    await saveSecureItem("access_token", data.session?.access_token || "")
+    await saveSecureItem("refresh_token", data.session?.refresh_token || "")
+    if (error) Alert.alert(error.message)
+    setLoading(false)
+  }
+
+
 
   return (
     <ScrollView className="flex-1 bg-zinc-900" showsVerticalScrollIndicator={false}>
@@ -136,7 +181,7 @@ export default function Login() {
           activeOpacity={0.8}
         >
           <View className="flex-row items-center justify-center">
-            <Text className={`font-bold text-lg mr-2 ${isFormValid ? "text-white" : "text-zinc-400"}`}>
+            <Text className={`font-bold text-lg mr-2 ${isFormValid ? "text-white" : "text-zinc-400"}`} onPress={signInWithEmail}>
               Continue Your Journey
             </Text>
             <Ionicons name="arrow-forward" size={20} color={isFormValid ? "white" : "#6b7280"} />
@@ -152,7 +197,7 @@ export default function Login() {
 
         {/* Social Login Options */}
         <View className="mb-8">
-          <TouchableOpacity
+          {/* <TouchableOpacity
             className="bg-zinc-800/60 border border-zinc-700/50 rounded-2xl py-4 flex-row items-center justify-center mb-4"
             activeOpacity={0.8}
           >
@@ -160,7 +205,8 @@ export default function Login() {
               <Ionicons name="logo-google" size={18} color="#ea4335" />
             </View>
             <Text className="text-white font-semibold">Continue with Google</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
+          <GoogleSignInComponent />
 
           <TouchableOpacity
             className="bg-zinc-800/60 border border-zinc-700/50 rounded-2xl py-4 flex-row items-center justify-center"
@@ -176,7 +222,7 @@ export default function Login() {
         {/* Sign Up Link */}
         <View className="flex-row justify-center items-center mb-8">
           <Text className="text-zinc-400">New here? </Text>
-          <TouchableOpacity className="py-2 px-1" activeOpacity={0.7}>
+          <TouchableOpacity className="py-2 px-1" activeOpacity={0.7} onPress={() => router.push('/signup')}  >
             <Text className="text-green-400 font-semibold">Start your journey</Text>
           </TouchableOpacity>
         </View>
@@ -240,184 +286,3 @@ export default function Login() {
 }
 
 
-
-// import { Ionicons } from '@expo/vector-icons';
-// import { useState } from 'react';
-// import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-
-// export default function Login() {
-//   const [email, setEmail] = useState('');
-//   const [password, setPassword] = useState('');
-//   const [showPassword, setShowPassword] = useState(false);
-//   const [rememberMe, setRememberMe] = useState(false);
-
-//   return (
-//     <ScrollView className="flex-1 bg-zinc-900">
-//       <View className="p-6 pt-20">
-//         {/* Header */}
-//         <View className="items-center mb-10">
-//           <View className="w-24 h-24 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl items-center justify-center mb-6 shadow-lg shadow-black/50">
-//             <Ionicons name="home" size={36} color="white" />
-//           </View>
-//           <Text className="text-3xl font-bold text-white mb-3">Welcome Back</Text>
-//           <Text className="text-zinc-400 text-center text-lg leading-6">
-//             Continue your recovery journey.{'\n'}Your progress is waiting for you.
-//           </Text>
-//         </View>
-
-//         {/* Encouraging Message */}
-//         <View className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 mb-8">
-//           <View className="flex-row items-center mb-2">
-//             <Ionicons name="trending-up" size={20} color="#3b82f6" />
-//             <Text className="text-blue-400 font-semibold ml-2">Your Streak Continues</Text>
-//           </View>
-//           <Text className="text-zinc-300 text-sm">
-//             Every day you log in is another step forward. Your commitment to recovery makes a difference.
-//           </Text>
-//         </View>
-
-//         {/* Login Form */}
-//         <View className="space-y-5 mb-6">
-//           {/* Email */}
-//           <View>
-//             <Text className="text-white font-semibold mb-2">Email Address</Text>
-//             <View className="bg-zinc-800 rounded-xl border border-zinc-700 p-4 flex-row items-center">
-//               <Ionicons name="mail-outline" size={22} color="#a1a1aa" />
-//               <TextInput
-//                 value={email}
-//                 onChangeText={setEmail}
-//                 placeholder="Enter your email"
-//                 placeholderTextColor="#6b7280"
-//                 keyboardType="email-address"
-//                 autoCapitalize="none"
-//                 className="text-white ml-3 flex-1 text-base"
-//               />
-//             </View>
-//           </View>
-
-//           {/* Password */}
-//           <View>
-//             <Text className="text-white font-semibold mb-2">Password</Text>
-//             <View className="bg-zinc-800 rounded-xl border border-zinc-700 p-4 flex-row items-center">
-//               <Ionicons name="lock-closed-outline" size={22} color="#a1a1aa" />
-//               <TextInput
-//                 value={password}
-//                 onChangeText={setPassword}
-//                 placeholder="Enter your password"
-//                 placeholderTextColor="#6b7280"
-//                 secureTextEntry={!showPassword}
-//                 className="text-white ml-3 flex-1 text-base"
-//               />
-//               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-//                 <Ionicons 
-//                   name={showPassword ? "eye-off-outline" : "eye-outline"} 
-//                   size={22} 
-//                   color="#a1a1aa" 
-//                 />
-//               </TouchableOpacity>
-//             </View>
-//           </View>
-//         </View>
-
-//         {/* Remember Me & Forgot Password */}
-//         <View className="flex-row justify-between items-center mb-8">
-//           <TouchableOpacity 
-//             className="flex-row items-center"
-//             onPress={() => setRememberMe(!rememberMe)}
-//           >
-//             <View className={`w-5 h-5 rounded border-2 mr-3 items-center justify-center ${
-//               rememberMe ? 'bg-green-500 border-green-500' : 'border-zinc-600'
-//             }`}>
-//               {rememberMe && <Ionicons name="checkmark" size={12} color="white" />}
-//             </View>
-//             <Text className="text-zinc-400">Remember me</Text>
-//           </TouchableOpacity>
-          
-//           <TouchableOpacity>
-//             <Text className="text-green-400 font-semibold">Forgot Password?</Text>
-//           </TouchableOpacity>
-//         </View>
-
-//         {/* Login Button */}
-//         <TouchableOpacity 
-//           className={`rounded-2xl py-4 mb-6 ${
-//             email && password
-//               ? 'bg-green-500 shadow-lg shadow-green-500/25' 
-//               : 'bg-zinc-700'
-//           }`}
-//           disabled={!email || !password}
-//         >
-//           <Text className="text-white font-bold text-center text-lg">Continue Your Journey</Text>
-//         </TouchableOpacity>
-
-//         {/* Divider */}
-//         <View className="flex-row items-center my-6">
-//           <View className="flex-1 h-px bg-zinc-700" />
-//           <Text className="text-zinc-500 mx-4">or continue with</Text>
-//           <View className="flex-1 h-px bg-zinc-700" />
-//         </View>
-
-//         {/* Social Login Options */}
-//         <View className="space-y-3 mb-8">
-//           <TouchableOpacity className="bg-zinc-800 border border-zinc-700 rounded-2xl py-4 flex-row items-center justify-center">
-//             <Ionicons name="logo-google" size={22} color="#ea4335" />
-//             <Text className="text-white font-semibold ml-3">Google</Text>
-//           </TouchableOpacity>
-          
-//           <TouchableOpacity className="bg-zinc-800 border border-zinc-700 rounded-2xl py-4 flex-row items-center justify-center">
-//             <Ionicons name="logo-apple" size={22} color="white" />
-//             <Text className="text-white font-semibold ml-3">Apple</Text>
-//           </TouchableOpacity>
-//         </View>
-
-//         {/* Sign Up Link */}
-//         <View className="flex-row justify-center items-center mb-8">
-//           <Text className="text-zinc-400">New to recovery support? </Text>
-//           <TouchableOpacity>
-//             <Text className="text-green-400 font-semibold">Create Account</Text>
-//           </TouchableOpacity>
-//         </View>
-
-//         {/* Quick Access Cards */}
-//         <View className="space-y-3 mb-6">
-//           <View className="bg-gradient-to-r from-amber-500/10 to-amber-600/10 border border-amber-500/20 rounded-2xl p-4">
-//             <View className="flex-row items-center mb-2">
-//               <Ionicons name="flash" size={20} color="#f59e0b" />
-//               <Text className="text-amber-400 font-semibold ml-2">Quick Access</Text>
-//             </View>
-//             <Text className="text-zinc-300 text-sm">
-//               Access emergency support, crisis hotlines, and immediate help resources without logging in.
-//             </Text>
-//             <TouchableOpacity className="mt-3">
-//               <Text className="text-amber-400 font-semibold">Get Help Now →</Text>
-//             </TouchableOpacity>
-//           </View>
-
-//           <View className="bg-gradient-to-r from-purple-500/10 to-purple-600/10 border border-purple-500/20 rounded-2xl p-4">
-//             <View className="flex-row items-center mb-2">
-//               <Ionicons name="people" size={20} color="#a855f7" />
-//               <Text className="text-purple-400 font-semibold ml-2">Anonymous Support</Text>
-//             </View>
-//             <Text className="text-zinc-300 text-sm">
-//               Join community discussions and find peer support while maintaining your privacy.
-//             </Text>
-//             <TouchableOpacity className="mt-3">
-//               <Text className="text-purple-400 font-semibold">Browse Community →</Text>
-//             </TouchableOpacity>
-//           </View>
-//         </View>
-
-//         {/* Footer Message */}
-//         <View className="bg-zinc-800/30 rounded-2xl p-4 border border-zinc-700/50">
-//           <View className="flex-row items-center mb-2">
-//             <Ionicons name="shield-checkmark" size={18} color="#22c55e" />
-//             <Text className="text-green-400 font-semibold ml-2">Secure & Private</Text>
-//           </View>
-//           <Text className="text-zinc-400 text-xs leading-4">
-//             Your data is encrypted end-to-end. We never share your personal information or recovery details with third parties.
-//           </Text>
-//         </View>
-//       </View>
-//     </ScrollView>
-//   );
-// } 

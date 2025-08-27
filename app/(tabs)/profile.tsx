@@ -1,8 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { supabase } from '../../lib/supabase';
+import * as SecureStore from 'expo-secure-store';
 
 export default function Profile() {
+
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut({ scope: 'local' })
+    if (error) {
+      Alert.alert('Error signing out:', error.message)
+    } else {
+      Alert.alert('Successfully signed out', 'You have been signed out')
+      }
+  }
+
   return (
     <ScrollView className="flex-1 bg-zinc-900">
       <View className="p-4 pt-12">
@@ -211,6 +224,7 @@ export default function Profile() {
         <TouchableOpacity 
           className="bg-zinc-800/50 border border-zinc-700 rounded-2xl py-4 mb-6 flex-row items-center justify-center"
           activeOpacity={0.7}
+          onPress={handleLogout}
         >
           <Ionicons name="log-out-outline" size={24} color="#ef4444" />
           <Text className="text-red-500 font-semibold ml-2">Logout</Text>

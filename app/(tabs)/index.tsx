@@ -1,5 +1,5 @@
 import ProgressModal from "@/components/ProgressModal";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { ScrollView, View } from "react-native";
 import CommunityInspiration from "../../components/CommunityInspiration";
 import DailyMessage from "../../components/DailyMessage";
@@ -19,11 +19,8 @@ export default function Index() {
   const [motivationStyle, setMotivationStyle] =
     useState<MotivationStyle>("positive");
   const [showStyleSelector, setShowStyleSelector] = useState(false);
-  const [hasTakenPledge, setHasTakenPledge] = useState(false);
-  const [hasAcceptedChallenge, setHasAcceptedChallenge] = useState(false);
   const [showMoodModal, setShowMoodModal] = useState(false);
   const [showProgressModal, setShowProgressModal] = useState(false);
-
   const todaysTip = getMotivationMessage(motivationStyle, "daily");
 
   const handleMoodSave = (mood: { emoji: string; label: string; note: string }) => {
@@ -76,6 +73,29 @@ export default function Index() {
     { name: "Dr. Sarah", icon: "👩‍⚕️", color: "bg-purple-900/30" },
   ];
 
+
+
+  // Memoize handlers to prevent unnecessary re-renders
+  const handleToggleToughLove = useCallback(() => {
+    if (motivationStyle === "tough-love") {
+      setMotivationStyle("positive");
+    } else {
+      setMotivationStyle("tough-love");
+    }
+  }, [motivationStyle]);
+
+  const handleStyleSelectorPress = useCallback(() => {
+    setShowStyleSelector(!showStyleSelector);
+  }, [showStyleSelector]);
+
+  // Simple counter to trigger HomeHeader refresh
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Function to refresh streak data after pledge is taken
+  const handlePledgeSuccess = useCallback(() => {
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
+
   return (
     <>
       <ScrollView
@@ -86,14 +106,9 @@ export default function Index() {
           {/* Header Section */}
           <HomeHeader
             motivationStyle={motivationStyle}
-            onToggleToughLove={() => {
-              if (motivationStyle === "tough-love") {
-                setMotivationStyle("positive");
-              } else {
-                setMotivationStyle("tough-love");
-              }
-            }}
-            onStyleSelectorPress={() => setShowStyleSelector(!showStyleSelector)}
+            onToggleToughLove={handleToggleToughLove}
+            onStyleSelectorPress={handleStyleSelectorPress}
+            refreshTrigger={refreshTrigger}
           />
 
           {/* Motivation Style Selector */}
@@ -116,10 +131,7 @@ export default function Index() {
 
           {/* Daily Pledge Card */}
           <View className="mb-8">
-            <PledgeContainer
-              hasTakenPledge={hasTakenPledge}
-              onPledgeTaken={() => setHasTakenPledge(true)}
-            />
+            <PledgeContainer onPledgeSuccess={handlePledgeSuccess} />
           </View>
 
           {/* Today's Message */}
@@ -130,7 +142,6 @@ export default function Index() {
               action={todaysTip.action}
               motivationStyle={motivationStyle}
               onActionPress={() => {
-                setHasAcceptedChallenge(true);
                 // You can add more functionality here like navigation or showing a confirmation
               }}
             />

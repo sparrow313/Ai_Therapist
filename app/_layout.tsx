@@ -1,8 +1,10 @@
 import { useFonts } from 'expo-font';
 import { Stack } from "expo-router";
 import * as SplashScreen from 'expo-splash-screen';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { View } from 'react-native';
+import 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import '../global.css';
 
 // Keep the splash screen visible while we fetch resources
@@ -14,9 +16,9 @@ export default function RootLayout() {
     'HankenGrotesk-Bold': require('../assets/fonts/HankenGrotesk-Bold.ttf'),
   });
 
-  const onLayoutRootView = useCallback(async () => {
+  useEffect(() => {
     if (fontsLoaded || fontError) {
-      await SplashScreen.hideAsync();
+      SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);
 
@@ -25,7 +27,7 @@ export default function RootLayout() {
   }
 
   return (
-    <View onLayout={onLayoutRootView} style={{ flex: 1, backgroundColor: '#18181b' }}>
+    <SafeAreaProvider>
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: '#18181b' },
@@ -48,7 +50,21 @@ export default function RootLayout() {
             title: "Information"
           }} 
         />
+        <Stack.Screen 
+          name="login" 
+          options={{ 
+            headerShown: true,
+            title: "Login"
+          }} 
+        />
+        <Stack.Screen 
+          name="signup" 
+          options={{ 
+            headerShown: true,
+            title: "Sign Up"
+          }} 
+        />
       </Stack>
-    </View>
+    </SafeAreaProvider>
   );
 }
